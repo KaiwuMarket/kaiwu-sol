@@ -15,8 +15,7 @@ import { useSolanaEvents } from "@/hooks/use-solana-events";
 import { useToast } from "@/hooks/use-toast";
 
 export default function InventoryPage() {
-  const wallet = useWallet();
-  const { connected, publicKey } = wallet || { connected: false, publicKey: null };
+  const { connected, publicKey } = useWallet();
   const { listItem, delistItem, intakeItem } = useMarketplace();
   const { useUserItems } = useSolanaEvents();
   const { toast } = useToast();
@@ -29,7 +28,7 @@ export default function InventoryPage() {
     items: userItems,
     loading: itemsLoading,
     error: itemsError,
-  } = useUserItems(publicKey);
+  } = useUserItems(publicKey || undefined);
 
   // 生成商品图片(基于itemId)
   const getItemImage = (itemId: number) => {

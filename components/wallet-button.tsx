@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useWallet } from "@solana/wallet-adapter-react"
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui"
-import { Wallet, AlertCircle } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Wallet, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
-  const wallet = useWallet()
-  const { connected, publicKey } = wallet || { connected: false, publicKey: null }
-  const [isPreview, setIsPreview] = useState(false)
+  const { connected, publicKey } = useWallet();
+  const [isPreview, setIsPreview] = useState(false);
 
   useEffect(() => {
-    const inIframe = window.self !== window.top
+    const inIframe = window.self !== window.top;
     const isPreviewUrl =
-      window.location.hostname.includes("vusercontent.net") || window.location.hostname.includes("v0.app")
-    setIsPreview(inIframe || isPreviewUrl)
-  }, [])
+      window.location.hostname.includes("vusercontent.net") ||
+      window.location.hostname.includes("v0.app");
+    setIsPreview(inIframe || isPreviewUrl);
+  }, []);
 
   if (isPreview && !collapsed) {
     return (
@@ -23,7 +23,7 @@ export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
         <AlertCircle className="w-3 h-3" />
         <span>Wallet available in production</span>
       </div>
-    )
+    );
   }
 
   if (isPreview && collapsed) {
@@ -34,7 +34,7 @@ export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
       >
         <Wallet className="w-4 h-4" />
       </button>
-    )
+    );
   }
 
   if (collapsed) {
@@ -42,7 +42,7 @@ export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
       <WalletMultiButton className="!bg-primary !text-primary-foreground hover:!bg-primary/90 !h-10 !w-10 !p-0 !rounded-lg !text-sm !font-medium !flex !items-center !justify-center">
         <Wallet className="w-4 h-4" />
       </WalletMultiButton>
-    )
+    );
   }
 
   if (connected && publicKey) {
@@ -53,7 +53,7 @@ export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
         </div>
         <WalletMultiButton className="!bg-transparent !border !border-border hover:!bg-secondary !h-10 !px-4 !rounded-lg !text-sm !font-medium" />
       </div>
-    )
+    );
   }
 
   return (
@@ -61,5 +61,5 @@ export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
       <Wallet className="w-4 h-4" />
       Connect Wallet
     </WalletMultiButton>
-  )
+  );
 }
