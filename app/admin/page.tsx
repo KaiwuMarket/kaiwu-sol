@@ -19,7 +19,8 @@ import { useMarketplace } from "@/hooks/use-marketplace";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminPage() {
-  const { connected, publicKey } = useWallet();
+  const wallet = useWallet();
+  const { connected, publicKey } = wallet || { connected: false, publicKey: null };
   const { initConfig, intakeItem, redeemConfirm } = useMarketplace();
   const { toast } = useToast();
 

@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 
 export function NetworkStatus() {
   const { connection } = useConnection();
-  const { connected } = useWallet();
+  const wallet = useWallet();
+  const connected = wallet?.connected || false;
   const [isOnline, setIsOnline] = useState(true);
   const [isSolanaOnline, setIsSolanaOnline] = useState(true);
   const [solanaVersion, setSolanaVersion] = useState<string | null>(null);

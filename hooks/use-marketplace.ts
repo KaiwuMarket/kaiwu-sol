@@ -355,6 +355,6 @@ export function useMarketplace() {
     initConfig,
     fetchItem,
     fetchListing,
-    connected: !!wallet.publicKey,
+    connected: walletConnected,
   };
 }

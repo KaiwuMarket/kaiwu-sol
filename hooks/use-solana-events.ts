@@ -59,13 +59,13 @@ export function useSolanaEvents() {
   const wallet = useWallet();
 
   const provider = useMemo(() => {
-    if (!wallet.publicKey) return null;
+    if (!walletPublicKey) return null;
     return new AnchorProvider(
       connection,
       wallet as any,
       AnchorProvider.defaultOptions()
     );
-  }, [connection, wallet]);
+  }, [connection, wallet, walletPublicKey]);
 
   const program = useMemo(() => {
     if (!provider) return null;

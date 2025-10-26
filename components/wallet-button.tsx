@@ -6,7 +6,8 @@ import { Wallet, AlertCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 
 export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
-  const { connected, publicKey } = useWallet()
+  const wallet = useWallet()
+  const { connected, publicKey } = wallet || { connected: false, publicKey: null }
   const [isPreview, setIsPreview] = useState(false)
 
   useEffect(() => {

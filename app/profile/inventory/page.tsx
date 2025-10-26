@@ -15,7 +15,8 @@ import { useSolanaEvents } from "@/hooks/use-solana-events";
 import { useToast } from "@/hooks/use-toast";
 
 export default function InventoryPage() {
-  const { connected, publicKey } = useWallet();
+  const wallet = useWallet();
+  const { connected, publicKey } = wallet || { connected: false, publicKey: null };
   const { listItem, delistItem, intakeItem } = useMarketplace();
   const { useUserItems } = useSolanaEvents();
   const { toast } = useToast();
