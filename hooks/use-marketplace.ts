@@ -39,6 +39,23 @@ export function useMarketplace() {
     return Array.from(hash);
   };
 
+  // 辅助函数：发送和确认交易
+  const sendAndConfirmTransaction = async (tx: any) => {
+    // 确保交易有最近的 blockhash
+    const { blockhash } = await connection.getLatestBlockhash();
+    tx.recentBlockhash = blockhash;
+    tx.feePayer = wallet.publicKey;
+
+    console.log("[v0] Sending transaction...");
+    const signature = await wallet.sendTransaction(tx, connection);
+    console.log("[v0] Transaction sent:", signature);
+
+    await connection.confirmTransaction(signature, "confirmed");
+    console.log("[v0] Transaction confirmed:", signature);
+
+    return signature;
+  };
+
   const intakeItem = useCallback(
     async (
       itemId: number,
@@ -77,11 +94,20 @@ export function useMarketplace() {
         } as any)
         .transaction();
 
-      const signature = await wallet.sendTransaction(tx, connection);
-      await connection.confirmTransaction(signature, "confirmed");
+      console.log("[v0] Transaction created, sending...");
 
-      console.log("[v0] Item intaked successfully:", signature);
-      return signature;
+      try {
+        const signature = await sendAndConfirmTransaction(tx);
+        return signature;
+      } catch (error: any) {
+        console.error("[v0] Send transaction error:", error);
+        console.error("Error details:", {
+          message: error?.message,
+          logs: error?.logs,
+          data: error?.data,
+        });
+        throw error;
+      }
     },
     [program, wallet, connection]
   );

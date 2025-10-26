@@ -24,8 +24,7 @@ interface ProductDetailProps {
 }
 
 export function ProductDetail({ productId }: ProductDetailProps) {
-  const wallet = useWallet();
-  const { connected, publicKey } = wallet || { connected: false, publicKey: null };
+  const { connected, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
   const { buyItem, redeemRequest } = useMarketplace();
   const { useItemDetails } = useSolanaEvents();

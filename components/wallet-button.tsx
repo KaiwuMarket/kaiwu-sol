@@ -8,14 +8,30 @@ import { useEffect, useState } from "react";
 export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
   const { connected, publicKey } = useWallet();
   const [isPreview, setIsPreview] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const inIframe = window.self !== window.top;
     const isPreviewUrl =
       window.location.hostname.includes("vusercontent.net") ||
       window.location.hostname.includes("v0.app");
     setIsPreview(inIframe || isPreviewUrl);
   }, []);
+
+  // 防止 SSR 水合错误
+  if (!mounted) {
+    return collapsed ? (
+      <div className="h-10 w-10 flex items-center justify-center bg-muted/50 border border-border rounded-lg">
+        <div className="w-4 h-4" />
+      </div>
+    ) : (
+      <div className="h-10 w-[180px] flex items-center gap-2 justify-center bg-muted/50 border border-border rounded-lg">
+        <div className="w-4 h-4" />
+        <div className="text-sm font-medium">Connecting...</div>
+      </div>
+    );
+  }
 
   if (isPreview && !collapsed) {
     return (

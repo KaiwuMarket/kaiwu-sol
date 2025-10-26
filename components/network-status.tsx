@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 
 export function NetworkStatus() {
   const { connection } = useConnection();
-  const wallet = useWallet();
-  const connected = wallet?.connected || false;
+  const { connected } = useWallet();
   const [isOnline, setIsOnline] = useState(true);
   const [isSolanaOnline, setIsSolanaOnline] = useState(true);
   const [solanaVersion, setSolanaVersion] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // 检查网络连接状态
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -23,14 +24,29 @@ export function NetworkStatus() {
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // 检查Solana网络状态
+    // 检查Solana网络状态 - 带超时保护
     const checkSolanaStatus = async () => {
+      if (!connection) return;
+
       try {
-        const version = await connection.getVersion();
-        setSolanaVersion(version["solana-core"]);
+        // 设置超时，避免阻塞
+        const version = await Promise.race([
+          connection.getVersion(),
+          new Promise<any>((_, reject) =>
+            setTimeout(() => reject(new Error("Connection timeout")), 5000)
+          ),
+        ]);
+
+        if (
+          version &&
+          typeof version === "object" &&
+          "solana-core" in version
+        ) {
+          setSolanaVersion(version["solana-core"] as string);
+        }
         setIsSolanaOnline(true);
       } catch (error) {
-        console.error("Solana connection error:", error);
+        console.warn("Solana connection check failed:", error);
         setIsSolanaOnline(false);
       }
     };
@@ -45,7 +61,8 @@ export function NetworkStatus() {
     };
   }, [connection]);
 
-  if (!connected) return null;
+  // 不在未连接时隐藏，让用户知道状态
+  if (!mounted) return null;
 
   return (
     <div className="flex items-center gap-2">

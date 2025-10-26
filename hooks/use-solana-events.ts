@@ -276,134 +276,112 @@ export function useSolanaEvents() {
     const walletToUse = userWallet || wallet.publicKey;
 
     const fetchUserItems = useCallback(async () => {
-      if (!program || !walletToUse) return;
+      if (!program || !walletToUse) {
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
         setError(null);
 
-        // 获取程序的最近交易签名
-        const signatures = await connection.getSignaturesForAddress(
-          PROGRAM_ID,
-          {
-            limit: 1000,
-          }
-        );
+        console.log("开始获取用户商品...");
 
         const userItems: UserItem[] = [];
-        const processedItems = new Set<string>();
 
-        // 解析交易获取用户相关的商品
-        for (const sig of signatures) {
-          try {
-            const tx = await connection.getParsedTransaction(sig.signature, {
-              maxSupportedTransactionVersion: 0,
-            });
+        // 简化方法: 尝试获取所有item账户，如果失败就返回空数组
+        try {
+          // 使用 anchor 的 methods 来获取所有item
+          // 设置5秒超时
+          const allItems = await Promise.race([
+            program.account.item.all(),
+            new Promise<any[]>((resolve) =>
+              setTimeout(() => {
+                console.warn("获取商品超时，返回空数组");
+                resolve([]);
+              }, 5000)
+            ),
+          ]);
 
-            if (!tx?.meta?.logMessages) continue;
+          console.log(`找到 ${allItems.length} 个item账户`);
 
-            // 查找与用户相关的事件
-            const hasUserEvent = tx.meta.logMessages.some((log) =>
-              log.includes(walletToUse.toBase58())
-            );
+          // 遍历所有item账户，找到用户拥有的
+          for (const itemRecord of allItems) {
+            try {
+              const itemData = itemRecord.account;
 
-            if (!hasUserEvent) continue;
+              // 检查用户是否拥有此商品
+              const isOwner = itemData.currentOwner.equals(walletToUse);
+              if (!isOwner) continue;
 
-            // 从交易中提取账户信息
-            const accounts = tx.transaction.message.accountKeys;
+              const itemId = itemData.itemId.toNumber();
+              const [listingPDA] = getListingPDA(itemRecord.publicKey);
+              const [receiptPDA] = getReceiptPDA(itemRecord.publicKey);
 
-            // 查找 item 账户
-            for (const acc of accounts) {
+              const userItem: UserItem = {
+                itemId,
+                itemPubkey: itemRecord.publicKey,
+                skuHash: itemData.skuHash,
+                vaultHash: itemData.vaultHash,
+                status: itemData.status,
+                currentOwner: itemData.currentOwner,
+                createdAt: itemData.createdAt,
+                isOwner: true,
+                canList: itemData.status.inVault !== undefined,
+                canRedeem:
+                  itemData.status.inVault !== undefined ||
+                  itemData.status.sold !== undefined,
+              };
+
+              // 尝试获取 listing 数据
               try {
-                // 检查是否是 item PDA
-                const [expectedPDA] = PublicKey.findProgramAddressSync(
-                  [Buffer.from("item"), acc.pubkey.toBuffer().slice(0, 8)],
-                  PROGRAM_ID
+                const listingData = await program.account.listing.fetch(
+                  listingPDA
                 );
-
-                if (!expectedPDA.equals(acc.pubkey)) continue;
-
-                const itemId = new BN(
-                  acc.pubkey.toBuffer().slice(0, 8)
-                ).toNumber();
-                const itemKey = `${itemId}`;
-
-                if (processedItems.has(itemKey)) continue;
-                processedItems.add(itemKey);
-
-                // 获取完整的商品数据
-                const itemData = await program.account.item.fetch(acc.pubkey);
-
-                // 检查用户是否拥有此商品
-                const isOwner = itemData.currentOwner.equals(walletToUse);
-
-                if (!isOwner) continue;
-
-                const [listingPDA] = getListingPDA(acc.pubkey);
-                const [receiptPDA] = getReceiptPDA(acc.pubkey);
-
-                const userItem: UserItem = {
-                  itemId,
-                  itemPubkey: acc.pubkey,
-                  skuHash: itemData.skuHash,
-                  vaultHash: itemData.vaultHash,
-                  status: itemData.status,
-                  currentOwner: itemData.currentOwner,
-                  createdAt: itemData.createdAt,
-                  isOwner: true,
-                  canList: itemData.status.inVault !== undefined,
-                  canRedeem:
-                    itemData.status.inVault !== undefined ||
-                    itemData.status.sold !== undefined,
+                userItem.listing = {
+                  seller: listingData.seller,
+                  priceLamports: listingData.priceLamports,
+                  priceSOL:
+                    listingData.priceLamports.toNumber() / 1_000_000_000,
+                  expiresAt: listingData.expiresAt,
+                  active: listingData.active,
                 };
-
-                // 尝试获取 listing 数据
-                try {
-                  const listingData = await program.account.listing.fetch(
-                    listingPDA
-                  );
-                  userItem.listing = {
-                    seller: listingData.seller,
-                    priceLamports: listingData.priceLamports,
-                    priceSOL:
-                      listingData.priceLamports.toNumber() / 1_000_000_000,
-                    expiresAt: listingData.expiresAt,
-                    active: listingData.active,
-                  };
-                } catch {
-                  // Listing 不存在
-                }
-
-                // 尝试获取 receipt 数据
-                try {
-                  const receiptData = await program.account.receipt.fetch(
-                    receiptPDA
-                  );
-                  userItem.receipt = {
-                    owner: receiptData.owner,
-                    state: receiptData.state,
-                  };
-                } catch {
-                  // Receipt 不存在
-                }
-
-                userItems.push(userItem);
               } catch {
-                // 不是有效的 item PDA
+                // Listing 不存在
               }
+
+              // 尝试获取 receipt 数据
+              try {
+                const receiptData = await program.account.receipt.fetch(
+                  receiptPDA
+                );
+                userItem.receipt = {
+                  owner: receiptData.owner,
+                  state: receiptData.state,
+                };
+              } catch {
+                // Receipt 不存在
+              }
+
+              userItems.push(userItem);
+            } catch (err) {
+              console.warn("Error fetching item:", err);
             }
-          } catch (err) {
-            console.warn("Error parsing transaction:", err);
           }
+        } catch (err) {
+          console.error("Failed to fetch items:", err);
+          // 如果失败，返回空数组，不阻塞用户操作
         }
 
+        console.log(`用户拥有 ${userItems.length} 个商品`);
         setItems(userItems);
+        setLoading(false);
       } catch (err) {
         console.error("Error fetching user items:", err);
         setError(
           err instanceof Error ? err.message : "Failed to fetch user items"
         );
-      } finally {
+        setItems([]); // 设置空数组，不阻塞用户操作
         setLoading(false);
       }
     }, [program, connection, walletToUse]);

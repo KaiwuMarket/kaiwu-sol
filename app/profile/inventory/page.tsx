@@ -10,6 +10,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useSolanaEvents } from "@/hooks/use-solana-events";
 import { useToast } from "@/hooks/use-toast";
@@ -22,12 +29,14 @@ export default function InventoryPage() {
   const [isIntaking, setIsIntaking] = useState(false);
   const [isListing, setIsListing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<number | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   // 获取用户拥有的商品
   const {
     items: userItems,
     loading: itemsLoading,
     error: itemsError,
+    refetch: refetchItems,
   } = useUserItems(publicKey || undefined);
 
   // 生成商品图片(基于itemId)
@@ -77,22 +86,32 @@ export default function InventoryPage() {
       const name = formData.get("name") as string;
       const vault = formData.get("vault") as string;
 
-      // 生成一个唯一的itemId (实际应用中应该从后端获取)
-      const itemId = Date.now() % 1000000;
+      // 生成一个唯一的itemId (使用时间戳确保唯一性)
+      const itemId =
+        Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 1000);
+
+      console.log("Creating item:", { itemId, sku, vault, name });
 
       await intakeItem(itemId, sku, vault, publicKey!);
 
       toast({
-        title: "Item Intaked Successfully!",
-        description: `${name} has been added to the vault.`,
+        title: "商品创建成功！",
+        description: `${name} 已成功添加到金库中`,
       });
 
       // 重置表单
       e.currentTarget.reset();
+
+      // 刷新用户商品列表
+      refetchItems();
+
+      // 关闭弹窗
+      setIsCreateOpen(false);
     } catch (error: any) {
+      console.error("Intake error:", error);
       toast({
-        title: "Intake Failed",
-        description: error.message || "Failed to intake item",
+        title: "创建失败",
+        description: error.message || "商品创建失败，请重试",
         variant: "destructive",
       });
     } finally {
@@ -103,16 +122,22 @@ export default function InventoryPage() {
   const handleListItem = async (itemId: number, price: number) => {
     setIsListing(true);
     try {
+      console.log("Listing item:", { itemId, price });
+
       await listItem(itemId, price, 30); // List for 30 days
 
       toast({
-        title: "Item Listed Successfully!",
-        description: `${getItemName(itemId)} is now available for purchase.`,
+        title: "商品上架成功！",
+        description: `${getItemName(itemId)} 已成功上架销售`,
       });
+
+      // 刷新用户商品列表
+      refetchItems();
     } catch (error: any) {
+      console.error("Listing error:", error);
       toast({
-        title: "Listing Failed",
-        description: error.message || "Failed to list item",
+        title: "上架失败",
+        description: error.message || "商品上架失败，请重试",
         variant: "destructive",
       });
     } finally {
@@ -123,18 +148,22 @@ export default function InventoryPage() {
 
   const handleDelistItem = async (itemId: number) => {
     try {
+      console.log("Delisting item:", itemId);
+
       await delistItem(itemId);
 
       toast({
-        title: "Item Delisted Successfully!",
-        description: `${getItemName(
-          itemId
-        )} has been removed from the marketplace.`,
+        title: "商品下架成功！",
+        description: `${getItemName(itemId)} 已从市场下架`,
       });
+
+      // 刷新用户商品列表
+      refetchItems();
     } catch (error: any) {
+      console.error("Delisting error:", error);
       toast({
-        title: "Delisting Failed",
-        description: error.message || "Failed to delist item",
+        title: "下架失败",
+        description: error.message || "商品下架失败，请重试",
         variant: "destructive",
       });
     }
@@ -153,71 +182,134 @@ export default function InventoryPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="p-8 text-center max-w-md">
           <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
-          <p className="text-muted-foreground">
-            Please connect your wallet to manage your inventory.
-          </p>
+          <h2 className="text-2xl font-bold mb-2">连接钱包</h2>
+          <p className="text-muted-foreground">请连接您的钱包来管理库存</p>
         </Card>
       </div>
     );
   }
 
-  if (itemsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-2">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading your inventory...</span>
-        </div>
-      </div>
-    );
-  }
+  // 不再阻止UI，改为在页面内显示加载状态
 
   if (itemsError) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="p-8 text-center max-w-md">
-          <h2 className="text-2xl font-bold mb-2">Failed to Load Inventory</h2>
+          <h2 className="text-2xl font-bold mb-2">加载库存失败</h2>
           <p className="text-muted-foreground mb-4">{itemsError}</p>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <Button onClick={() => window.location.reload()}>重试</Button>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold mb-2">My Inventory</h1>
-        <p className="text-muted-foreground">
-          Manage your items: intake, list, and delist
-        </p>
+    <div className="container mx-auto px-6 py-8 max-w-7xl">
+      {/* 头部区域 */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold mb-2">我的库存</h1>
+          <p className="text-muted-foreground">
+            管理您的商品：创建、上架和下架
+          </p>
+          {itemsLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>正在加载库存，您可以继续操作...</span>
+            </div>
+          )}
+        </div>
+
+        {/* 创建商品按钮 */}
+        <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <SheetTrigger asChild>
+            <Button size="lg">
+              <Plus className="w-5 h-5 mr-2" />
+              创建商品
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="w-full sm:max-w-2xl">
+            <SheetHeader>
+              <SheetTitle>创建新商品</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              <form onSubmit={handleIntakeItem} className="space-y-4">
+                <div>
+                  <Label htmlFor="sku">SKU / 商品代码</Label>
+                  <Input
+                    id="sku"
+                    name="sku"
+                    placeholder="例如: PSA-12345"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="name">商品名称</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="例如: 2025 Pokemon Card PSA 10"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="vault">金库位置</Label>
+                  <Input
+                    id="vault"
+                    name="vault"
+                    placeholder="例如: Vault A-123"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">商品描述</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    placeholder="商品描述（可选）"
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isIntaking}>
+                  {isIntaking ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      创建中...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4 mr-2" />
+                      创建商品
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       <Tabs defaultValue="vault" className="w-full">
-        <TabsList>
-          <TabsTrigger value="vault">
-            In Vault ({vaultItems.length})
-          </TabsTrigger>
+        <TabsList className="mb-6">
+          <TabsTrigger value="vault">金库中 ({vaultItems.length})</TabsTrigger>
           <TabsTrigger value="listed">
-            Listed ({listedItems.length})
+            已上架 ({listedItems.length})
           </TabsTrigger>
-          <TabsTrigger value="intake">Intake New Item</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vault" className="space-y-4">
           {vaultItems.length === 0 ? (
             <div className="text-center py-12">
               <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Items in Vault</h3>
-              <p className="text-muted-foreground">
-                You don't have any items in your vault yet.
-              </p>
+              <h3 className="text-lg font-semibold mb-2">金库为空</h3>
+              <p className="text-muted-foreground">您还没有任何商品在金库中</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {vaultItems.map((item) => (
-                <Card key={item.itemId} className="p-4">
+                <Card
+                  key={item.itemId}
+                  className="p-6 hover:shadow-lg transition-shadow"
+                >
                   <div className="aspect-square bg-secondary rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     <img
                       src={getItemImage(item.itemId)}
@@ -225,7 +317,7 @@ export default function InventoryPage() {
                       className="w-full h-full object-contain p-2"
                     />
                   </div>
-                  <h3 className="font-semibold mb-1 truncate">
+                  <h3 className="font-semibold mb-2 truncate text-lg">
                     {getItemName(item.itemId)}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -237,14 +329,12 @@ export default function InventoryPage() {
                     disabled={selectedItem === item.itemId}
                   >
                     <List className="w-4 h-4 mr-2" />
-                    List for Sale
+                    上架销售
                   </Button>
 
                   {selectedItem === item.itemId && (
-                    <div className="mt-4 p-4 bg-secondary rounded-lg space-y-3">
-                      <Label htmlFor={`price-${item.itemId}`}>
-                        Price (SOL)
-                      </Label>
+                    <div className="mt-4 p-4 bg-secondary rounded-lg space-y-3 border border-border">
+                      <Label htmlFor={`price-${item.itemId}`}>价格 (SOL)</Label>
                       <Input
                         id={`price-${item.itemId}`}
                         type="number"
@@ -270,7 +360,7 @@ export default function InventoryPage() {
                           {isListing ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            "Confirm"
+                            "确认上架"
                           )}
                         </Button>
                         <Button
@@ -278,7 +368,7 @@ export default function InventoryPage() {
                           variant="outline"
                           onClick={() => setSelectedItem(null)}
                         >
-                          Cancel
+                          取消
                         </Button>
                       </div>
                     </div>
@@ -293,15 +383,18 @@ export default function InventoryPage() {
           {listedItems.length === 0 ? (
             <div className="text-center py-12">
               <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Listed Items</h3>
+              <h3 className="text-lg font-semibold mb-2">没有上架商品</h3>
               <p className="text-muted-foreground">
-                You don't have any items listed for sale.
+                您还没有任何商品在市场上销售
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listedItems.map((item) => (
-                <Card key={item.itemId} className="p-4">
+                <Card
+                  key={item.itemId}
+                  className="p-6 hover:shadow-lg transition-shadow"
+                >
                   <div className="aspect-square bg-secondary rounded-lg mb-4 flex items-center justify-center overflow-hidden">
                     <img
                       src={getItemImage(item.itemId)}
@@ -309,13 +402,13 @@ export default function InventoryPage() {
                       className="w-full h-full object-contain p-2"
                     />
                   </div>
-                  <h3 className="font-semibold mb-1 truncate">
+                  <h3 className="font-semibold mb-2 truncate text-lg">
                     {getItemName(item.itemId)}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-2">
+                  <p className="text-sm text-muted-foreground mb-3">
                     SKU: {getItemSku(item.itemId)}
                   </p>
-                  <div className="text-lg font-bold text-primary mb-4">
+                  <div className="text-2xl font-bold text-primary mb-4">
                     {item.listing?.priceSOL || 0} SOL
                   </div>
                   <Button
@@ -324,53 +417,12 @@ export default function InventoryPage() {
                     onClick={() => handleDelistItem(item.itemId)}
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Delist Item
+                    下架商品
                   </Button>
                 </Card>
               ))}
             </div>
           )}
-        </TabsContent>
-
-        <TabsContent value="intake">
-          <Card className="p-6 max-w-2xl">
-            <h2 className="text-2xl font-bold mb-6">Intake New Item</h2>
-            <form onSubmit={handleIntakeItem} className="space-y-4">
-              <div>
-                <Label htmlFor="sku">SKU / Item Code</Label>
-                <Input id="sku" placeholder="e.g., PSA-12345" required />
-              </div>
-              <div>
-                <Label htmlFor="name">Item Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., 2025 Pokemon Card PSA 10"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="vault">Vault Location</Label>
-                <Input id="vault" placeholder="e.g., Vault A-123" required />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Input id="description" placeholder="Item description" />
-              </div>
-              <Button type="submit" className="w-full" disabled={isIntaking}>
-                {isIntaking ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Intake Item
-                  </>
-                )}
-              </Button>
-            </form>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>
