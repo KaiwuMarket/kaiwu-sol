@@ -28,22 +28,22 @@ const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
   { name: "Profile", href: "/profile", icon: User },
-  { name: "Packs", href: "/packs", icon: Package, badge: "NEW" },
-  { name: "Stream", href: "/stream", icon: Video },
-  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
-  { name: "Admin", href: "/admin", icon: Settings },
-  { name: "About", href: "/about", icon: Info },
+  // { name: "Packs", href: "/packs", icon: Package, badge: "NEW" },
+  // { name: "Stream", href: "/stream", icon: Video },
+  // { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
+  // { name: "Admin", href: "/admin", icon: Settings },
+  // { name: "About", href: "/about", icon: Info },
 ];
 
 const communityLinks = [
-  { name: "Merchants", href: "/merchants", icon: Store, badge: "SOON" },
-  { name: "Activity", href: "/activity", icon: Activity },
-  { name: "Refer & Earn", href: "/refer", icon: Gift },
+  // { name: "Merchants", href: "/merchants", icon: Store, badge: "SOON" },
+  // { name: "Activity", href: "/activity", icon: Activity },
+  // { name: "Refer & Earn", href: "/refer", icon: Gift },
 ];
 
 const exploreLinks = [
-  { name: "Pokémon", href: "/pokemon", icon: Sparkles },
-  { name: "Card Sets", href: "/card-sets", icon: Grid3x3 },
+  // { name: "Pokémon", href: "/pokemon", icon: Sparkles },
+  // { name: "Card Sets", href: "/card-sets", icon: Grid3x3 },
 ];
 
 export function Sidebar({
@@ -74,7 +74,7 @@ export function Sidebar({
           {!isCollapsed && (
             <Link href="/" className="flex items-center gap-2">
               <div className="text-2xl font-bold">
-                <span className="text-foreground">phygitals</span>
+                <span className="text-foreground">Kaiwu</span>
               </div>
               <span className="px-2 py-0.5 text-xs bg-secondary text-muted-foreground rounded">
                 BETA

@@ -1,13 +1,48 @@
 "use client"
 
 import { useWallet } from "@solana/wallet-adapter-react"
-import { User, Package, ShoppingCart, Wallet } from "lucide-react"
+import { User, Package, ShoppingCart, Wallet, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { useOnchainData } from "@/hooks/use-onchain-data"
+import { useEffect, useState } from "react"
 
 export default function ProfilePage() {
   const { publicKey, connected } = useWallet()
+  const { fetchUserInventory, fetchUserPurchases } = useOnchainData();
+
+  const [ownedCount, setOwnedCount] = useState<number | null>(null);
+  const [listedCount, setListedCount] = useState<number | null>(null);
+  const [purchaseCount, setPurchaseCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      setLoading(true);
+      Promise.all([
+        fetchUserInventory(publicKey),
+        fetchUserPurchases(publicKey)
+      ]).then(([inventoryItems, purchaseItems]) => {
+        const totalListed = inventoryItems.filter(item => item.status === 'listed').length;
+        const totalPurchased = purchaseItems.length;
+        // Total owned is everything in inventory (listed or not) + everything purchased
+        const totalOwned = inventoryItems.length + purchaseItems.length;
+
+        setOwnedCount(totalOwned);
+        setListedCount(totalListed);
+        setPurchaseCount(totalPurchased);
+      }).finally(() => {
+        setLoading(false);
+      });
+    } else {
+        // Reset stats if wallet disconnects
+        setOwnedCount(null);
+        setListedCount(null);
+        setPurchaseCount(null);
+    }
+  }, [connected, publicKey, fetchUserInventory, fetchUserPurchases]);
+
 
   if (!connected) {
     return (
@@ -22,6 +57,15 @@ export default function ProfilePage() {
       </div>
     )
   }
+
+  const StatCard = ({ title, value }: { title: string, value: number | null }) => (
+     <Card className="p-6">
+        <div className="text-sm text-muted-foreground mb-1">{title}</div>
+        <div className="text-3xl font-bold">
+            {loading || value === null ? <Loader2 className="w-6 h-6 animate-spin" /> : value}
+        </div>
+    </Card>
+  );
 
   return (
     <div className="space-y-8">
@@ -67,8 +111,8 @@ export default function ProfilePage() {
         <Link href="/profile/purchases">
           <Card className="p-6 hover:bg-secondary/50 transition-colors cursor-pointer h-full">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
-                <ShoppingCart className="w-6 h-6 text-success" />
+              <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                <ShoppingCart className="w-6 h-6 text-green-500" />
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-2">My Purchases</h3>
@@ -86,18 +130,9 @@ export default function ProfilePage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground mb-1">Total Items Owned</div>
-          <div className="text-3xl font-bold">0</div>
-        </Card>
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground mb-1">Items Listed</div>
-          <div className="text-3xl font-bold">0</div>
-        </Card>
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground mb-1">Total Purchases</div>
-          <div className="text-3xl font-bold">0</div>
-        </Card>
+        <StatCard title="Total Items Owned" value={ownedCount} />
+        <StatCard title="Items Listed" value={listedCount} />
+        <StatCard title="Total Purchases" value={purchaseCount} />
       </div>
     </div>
   )

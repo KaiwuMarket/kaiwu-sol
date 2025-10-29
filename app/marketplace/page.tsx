@@ -1,66 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Package, Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useSolanaEvents } from "@/hooks/use-solana-events";
+import { useOnchainData, OnchainItem } from "@/hooks/use-onchain-data";
 import { useMarketplace } from "@/hooks/use-marketplace";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 export default function MarketplacePage() {
-  const { connected, publicKey } = useWallet();
+  const { connected } = useWallet();
   const { buyItem } = useMarketplace();
-  const { useListedItems } = useSolanaEvents();
-  const { toast } = useToast();
-  const [buyingItem, setBuyingItem] = useState<number | null>(null);
-
-  // 获取所有上架的商品
   const {
-    items: listedItems,
     loading: itemsLoading,
     error: itemsError,
-  } = useListedItems();
+    fetchAllListedItems,
+  } = useOnchainData();
+  const { toast } = useToast();
+  const [buyingItem, setBuyingItem] = useState<string | null>(null);
+  const [items, setItems] = useState<OnchainItem[]>([]);
 
-  // 生成商品图片(基于itemId)
-  const getItemImage = (itemId: number) => {
-    const images = [
-      "/pokemon-card-graded-slab.jpg",
-      "/pokemon-card-graded-slab-blue.jpg",
-      "/pokemon-card-graded-slab-green.jpg",
-      "/pokemon-card-graded-slab-pink.jpg",
-      "/pokemon-card-graded-slab-purple.jpg",
-      "/pokemon-card-graded-slab-red.jpg",
-    ];
-    return images[itemId % images.length];
-  };
+  useEffect(() => {
+    fetchAllListedItems().then(setItems);
+  }, [fetchAllListedItems]);
 
-  // 生成商品名称(基于itemId)
-  const getItemName = (itemId: number) => {
-    const names = [
-      "Charizard VMAX",
-      "Pikachu VMAX",
-      "Mewtwo GX",
-      "Rayquaza VMAX",
-      "Umbreon VMAX",
-      "Gengar VMAX",
-      "Lugia V",
-      "Mew VMAX",
-      "Giratina VSTAR",
-      "Arceus VSTAR",
-      "Dialga VSTAR",
-      "Palkia VSTAR",
-    ];
-    return names[itemId % names.length] || `Item #${itemId}`;
-  };
 
-  // 生成SKU(基于itemId)
-  const getItemSku = (itemId: number) => {
-    return `PSA-${String(itemId).padStart(5, "0")}`;
-  };
-
-  const handleBuyItem = async (itemId: number) => {
+  const handleBuyItem = async (item: OnchainItem) => {
     if (!connected) {
       toast({
         title: "请先连接钱包",
@@ -70,19 +37,17 @@ export default function MarketplacePage() {
       return;
     }
 
-    setBuyingItem(itemId);
+    setBuyingItem(item.itemId);
     try {
-      console.log("Buying item:", itemId);
-
-      await buyItem(itemId);
+      await buyItem(Number.parseInt(item.itemId));
 
       toast({
         title: "购买成功！",
-        description: `${getItemName(itemId)} 已成功购买`,
+        description: `${item.name} 已成功购买`,
       });
 
-      // 刷新商品列表
-      window.location.reload();
+      // 重新获取最新商品列表
+      fetchAllListedItems().then(setItems);
     } catch (error: any) {
       console.error("Buying error:", error);
       toast({
@@ -95,7 +60,7 @@ export default function MarketplacePage() {
     }
   };
 
-  if (itemsLoading) {
+  if (itemsLoading && items.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center gap-2">
@@ -111,8 +76,10 @@ export default function MarketplacePage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="p-8 text-center max-w-md">
           <h2 className="text-2xl font-bold mb-2">加载市场失败</h2>
-          <p className="text-muted-foreground mb-4">{itemsError}</p>
-          <Button onClick={() => window.location.reload()}>重试</Button>
+          <p className="text-muted-foreground mb-4">{itemsError.message}</p>
+          <Button onClick={() => fetchAllListedItems().then(setItems)}>
+            重试
+          </Button>
         </Card>
       </div>
     );
@@ -123,11 +90,11 @@ export default function MarketplacePage() {
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">市场</h1>
         <p className="text-muted-foreground">
-          浏览和交易Solana上的Pokemon卡片NFT
+          浏览和交易Solana上的Popmart潮玩NFT
         </p>
       </div>
 
-      {listedItems.length === 0 ? (
+      {items.length === 0 ? (
         <div className="text-center py-12">
           <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">市场为空</h3>
@@ -135,30 +102,37 @@ export default function MarketplacePage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {listedItems.map((item) => (
+          {items.map((item) => (
             <Card
-              key={item.itemId}
-              className="p-6 hover:shadow-lg transition-shadow"
+              key={item.pda}
+              className="p-6 hover:shadow-lg transition-shadow flex flex-col"
             >
-              <div className="aspect-square bg-secondary rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                <img
-                  src={getItemImage(item.itemId)}
-                  alt={getItemName(item.itemId)}
-                  className="w-full h-full object-contain p-2"
-                />
-              </div>
-              <h3 className="font-semibold mb-2 truncate text-lg">
-                {getItemName(item.itemId)}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                SKU: {getItemSku(item.itemId)}
-              </p>
-              <div className="text-2xl font-bold text-primary mb-4">
-                {item.priceSOL} SOL
-              </div>
+              <Link
+                href={`/product/${item.itemId}`}
+                className="flex flex-col h-full"
+              >
+                <div className="aspect-square bg-secondary rounded-lg mb-4 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-contain p-2"
+                  />
+                </div>
+                <div className="flex-grow">
+                  <h3 className="font-semibold mb-2 truncate text-lg">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Item ID: {item.itemId}
+                  </p>
+                </div>
+                <div className="text-2xl font-bold text-primary mb-4">
+                  {item.listing?.priceSol.toFixed(2)} SOL
+                </div>
+              </Link>
               <Button
                 className="w-full"
-                onClick={() => handleBuyItem(item.itemId)}
+                onClick={() => handleBuyItem(item)}
                 disabled={buyingItem === item.itemId || !connected}
               >
                 {buyingItem === item.itemId ? (

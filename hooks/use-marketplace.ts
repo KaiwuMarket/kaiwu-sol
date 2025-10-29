@@ -42,7 +42,8 @@ export function useMarketplace() {
   // 辅助函数：发送和确认交易
   const sendAndConfirmTransaction = async (tx: any) => {
     // 确保交易有最近的 blockhash
-    const { blockhash } = await connection.getLatestBlockhash();
+    const { blockhash, lastValidBlockHeight } =
+      await connection.getLatestBlockhash();
     tx.recentBlockhash = blockhash;
     tx.feePayer = wallet.publicKey;
 
@@ -50,7 +51,14 @@ export function useMarketplace() {
     const signature = await wallet.sendTransaction(tx, connection);
     console.log("[v0] Transaction sent:", signature);
 
-    await connection.confirmTransaction(signature, "confirmed");
+    await connection.confirmTransaction(
+      {
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      },
+      "confirmed"
+    );
     console.log("[v0] Transaction confirmed:", signature);
 
     return signature;
@@ -142,9 +150,7 @@ export function useMarketplace() {
         } as any)
         .transaction();
 
-      const signature = await wallet.sendTransaction(tx, connection);
-      await connection.confirmTransaction(signature, "confirmed");
-
+      const signature = await sendAndConfirmTransaction(tx);
       console.log("[v0] Item listed successfully:", signature);
       return signature;
     },
@@ -176,9 +182,7 @@ export function useMarketplace() {
         } as any)
         .transaction();
 
-      const signature = await wallet.sendTransaction(tx, connection);
-      await connection.confirmTransaction(signature, "confirmed");
-
+      const signature = await sendAndConfirmTransaction(tx);
       console.log("[v0] Item delisted successfully:", signature);
       return signature;
     },
@@ -225,9 +229,7 @@ export function useMarketplace() {
         } as any)
         .transaction();
 
-      const signature = await wallet.sendTransaction(tx, connection);
-      await connection.confirmTransaction(signature, "confirmed");
-
+      const signature = await sendAndConfirmTransaction(tx);
       console.log("[v0] Item purchased successfully:", signature);
       return signature;
     },
@@ -256,9 +258,7 @@ export function useMarketplace() {
         } as any)
         .transaction();
 
-      const signature = await wallet.sendTransaction(tx, connection);
-      await connection.confirmTransaction(signature, "confirmed");
-
+      const signature = await sendAndConfirmTransaction(tx);
       console.log("[v0] Redemption requested successfully:", signature);
       return signature;
     },
@@ -291,9 +291,7 @@ export function useMarketplace() {
         } as any)
         .transaction();
 
-      const signature = await wallet.sendTransaction(tx, connection);
-      await connection.confirmTransaction(signature, "confirmed");
-
+      const signature = await sendAndConfirmTransaction(tx);
       console.log("[v0] Redemption confirmed successfully:", signature);
       return signature;
     },
@@ -323,9 +321,7 @@ export function useMarketplace() {
         } as any)
         .transaction();
 
-      const signature = await wallet.sendTransaction(tx, connection);
-      await connection.confirmTransaction(signature, "confirmed");
-
+      const signature = await sendAndConfirmTransaction(tx);
       console.log("[v0] Config initialized successfully:", signature);
       return signature;
     },

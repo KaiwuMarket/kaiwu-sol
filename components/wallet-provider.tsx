@@ -20,24 +20,27 @@ export function SolanaWalletProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // 生成完整的代理 URL
-  // 在客户端需要完整 URL
-  const endpoint =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/api/solana-rpc`
-      : "https://api.devnet.solana.com"; // SSR fallback
+  const httpEndpoint =
+    process.env.NEXT_PUBLIC_SOLANA_RPC ?? clusterApiUrl("devnet");
+
+  const wsEndpoint = httpEndpoint.startsWith("http")
+    ? httpEndpoint
+        .replace("https://", "wss://")
+        .replace("http://", "ws://")
+    : undefined;
 
   const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
 
-  console.log("🔗 Using RPC proxy:", endpoint);
+  console.log("🔗 Using RPC endpoint:", httpEndpoint);
 
   return (
     <ConnectionProvider
-      endpoint={endpoint}
+      endpoint={httpEndpoint}
       config={{
         commitment: "confirmed",
         confirmTransactionInitialTimeout: 60000,
       }}
+      wsEndpoint={wsEndpoint}
     >
       <WalletProvider wallets={wallets} autoConnect={false}>
         <WalletModalProvider>{children}</WalletModalProvider>

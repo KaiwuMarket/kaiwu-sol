@@ -1,8 +1,8 @@
 import { PublicKey } from "@solana/web3.js"
 import { BN } from "@coral-xyz/anchor"
-import { KAIWU_PROGRAM_ID } from "../idl/kaiwu"
+import { IDL } from "../idl/kaiwu"
 
-export const PROGRAM_ID = new PublicKey(KAIWU_PROGRAM_ID)
+export const PROGRAM_ID = new PublicKey(IDL.address)
 
 // PDA seeds
 export const CONFIG_SEED = Buffer.from("config")

@@ -1,9 +1,10 @@
 "use client";
 
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, ParsedTransactionWithMeta } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
 import { useCallback, useEffect, useState, useMemo } from "react";
+import type { Transaction } from "@solana/web3.js";
 import {
   PROGRAM_ID,
   getItemPDA,
@@ -58,17 +59,32 @@ export function useSolanaEvents() {
   const { connection } = useConnection();
   const wallet = useWallet();
 
+  const readOnlyWallet = useMemo(
+    () => ({
+      publicKey: new PublicKey("11111111111111111111111111111111"),
+      // No-op signers keep Anchor happy for read-only usage
+      async signTransaction<T extends Transaction>(tx: T): Promise<T> {
+        return tx;
+      },
+      async signAllTransactions<T extends Transaction>(txs: T[]): Promise<T[]> {
+        return txs;
+      },
+    }),
+    []
+  );
+
   const provider = useMemo(() => {
-    if (!wallet.publicKey) return null;
+    const hasWalletSigner =
+      wallet.publicKey && wallet.signTransaction && wallet.signAllTransactions;
+
     return new AnchorProvider(
       connection,
-      wallet as any,
+      (hasWalletSigner ? wallet : readOnlyWallet) as any,
       AnchorProvider.defaultOptions()
     );
-  }, [connection, wallet]);
+  }, [connection, wallet, readOnlyWallet]);
 
   const program = useMemo(() => {
-    if (!provider) return null;
     return new Program<Kaiwu>(IDL, provider);
   }, [provider]);
 

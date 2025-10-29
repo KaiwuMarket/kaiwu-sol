@@ -1,7 +1,7 @@
 import { HeroSection } from "@/components/hero-section"
 import { RecentPulls } from "@/components/recent-pulls"
-import { DigitalPacks } from "@/components/digital-packs"
-import { CollectorLeaderboard } from "@/components/collector-leaderboard"
+// import { DigitalPacks } from "@/components/digital-packs"
+// import { CollectorLeaderboard } from "@/components/collector-leaderboard"
 import { CommunityTestimonials } from "@/components/community-testimonials"
 
 export default function HomePage() {
@@ -9,8 +9,8 @@ export default function HomePage() {
     <div className="min-h-screen">
       <HeroSection />
       <RecentPulls />
-      <DigitalPacks />
-      <CollectorLeaderboard />
+      {/* <DigitalPacks /> */}
+      {/* <CollectorLeaderboard /> */}
       <CommunityTestimonials />
     </div>
   )

@@ -14,7 +14,7 @@ export function HeroSection() {
         <div className="max-w-2xl">
           <h1 className="text-6xl font-bold mb-6 text-balance">Basketball Packs</h1>
           <p className="text-xl text-muted-foreground mb-8 text-pretty">
-            Open a digital pack to instantly reveal a real card. Choose to hold, trade, redeem, or sell it back to us at
+            Open a digital pack to instantly reveal a real Labubu. Choose to hold, trade, redeem, or sell it back to us at
             85% value!
           </p>
           <Button size="lg" className="gap-2">
