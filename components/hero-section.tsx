@@ -12,7 +12,7 @@ export function HeroSection() {
       />
       <div className="relative z-20 h-full flex items-center px-12">
         <div className="max-w-2xl">
-          <h1 className="text-6xl font-bold mb-6 text-balance">Basketball Packs</h1>
+          <h1 className="text-6xl font-bold mb-6 text-balance">Labubu Packs</h1>
           <p className="text-xl text-muted-foreground mb-8 text-pretty">
             Open a digital pack to instantly reveal a real Labubu. Choose to hold, trade, redeem, or sell it back to us at
             85% value!
