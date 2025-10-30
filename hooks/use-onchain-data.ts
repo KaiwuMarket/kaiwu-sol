@@ -336,15 +336,15 @@ export function useOnchainData() {
         // --- 获取所有商品，然后在客户端进行过滤 ---
         const allItems = await program.account.item.all();
 
-        // --- 过滤出用户购买的 "Sold" 状态的商品 ---
-        const soldItems = allItems.filter(item =>
+        // --- 过滤出用户购买的 "Sold", "RedeemPending", "Redeemed" 状态的商品 ---
+        const purchasedItems = allItems.filter(item =>
             item.account.currentOwner.equals(userPublicKey) &&
-            'sold' in item.account.status
+            ('sold' in item.account.status || 'redeemPending' in item.account.status || 'redeemed' in item.account.status)
         );
 
-        if (soldItems.length === 0) return [];
+        if (purchasedItems.length === 0) return [];
 
-        const itemPdas = soldItems.map(item => item.publicKey);
+        const itemPdas = purchasedItems.map(item => item.publicKey);
         return await processItems(itemPdas);
 
     } catch (err) {

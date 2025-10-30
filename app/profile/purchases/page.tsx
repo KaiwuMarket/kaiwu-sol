@@ -65,7 +65,7 @@ function PurchaseItemCard({ item }: { item: OnchainItem }) {
                     </Button>
                 )}
                  {item.status === "redeemPending" && (
-                  <div className="flex items-center gap-2 text-yellow-600"><Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">Awaiting confirmation...</span></div>
+                  <div className="flex items-center gap-2 text-yellow-600"><Truck className="w-4 h-4" /><span className="text-sm">Awaiting confirmation...</span></div>
                 )}
                 {item.status === "redeemed" && (
                   <div className="flex items-center gap-2 text-green-600"><CheckCircle className="w-4 h-4" /><span className="text-sm">Delivered</span></div>
