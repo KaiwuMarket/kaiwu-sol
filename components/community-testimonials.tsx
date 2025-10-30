@@ -3,38 +3,38 @@ import { Star } from "lucide-react"
 const testimonials = [
   {
     id: 1,
-    username: "CardMaster2024",
+    username: "LabubuLover88",
     avatar: "/abstract-geometric-shapes.png",
     rating: 5,
     comment:
-      "Just pulled a PSA 10 Charizard from the Elite Pack! This platform is incredible. The authentication process is seamless and I love that I can trade instantly.",
+      "Just pulled a rare “Pop Mart × Labubu Forest Spirit” from the limited blind box! The authentication and warehousing process was seamless, and I could list it for trade instantly — super convenient!",
     date: "2 days ago",
   },
   {
     id: 2,
-    username: "HoopsCollector",
+    username: "FigureHunter",
     avatar: "/abstract-geometric-shapes.png",
     rating: 5,
     comment:
-      "Best NFT marketplace for graded cards. The Solana integration makes transactions super fast and cheap. Already made 3 purchases this week!",
+      "The best trading platform for designer toys! The on-chain certification makes transactions fast and secure — already added three Labubus to my collection this week!",
     date: "3 days ago",
   },
   {
     id: 3,
-    username: "PokemonTrader99",
+    username: "GradedToys",
     avatar: "/diverse-group-collaborating.png",
     rating: 5,
     comment:
-      "Love the leaderboard feature! It's so fun competing with other collectors. The pack opening experience is addictive.",
+      "Finally, a platform that truly understands Labubu collectors. Every piece comes with grading and authenticity proof, and the interface is super easy to use. Highly recommend!",
     date: "5 days ago",
   },
   {
     id: 4,
-    username: "GradedGems",
+    username: "PopMartGirl",
     avatar: "/abstract-geometric-shapes.png",
     rating: 5,
     comment:
-      "Finally a platform that understands collectors. The grading information is detailed and the marketplace is easy to navigate. Highly recommend!",
+      "The storage-and-trade feature is so practical — I can list items right after sending them in, without worrying about shipping. The interface is clean, and it’s super easy to find rare editions!",
     date: "1 week ago",
   },
 ]
