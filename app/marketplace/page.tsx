@@ -30,8 +30,8 @@ export default function MarketplacePage() {
   const handleBuyItem = async (item: OnchainItem) => {
     if (!connected) {
       toast({
-        title: "请先连接钱包",
-        description: "您需要连接钱包才能购买商品",
+        title: "Please Connect Your Wallet",
+        description: "You need to connect your wallet to buy items",
         variant: "destructive",
       });
       return;
@@ -42,8 +42,8 @@ export default function MarketplacePage() {
       await buyItem(Number.parseInt(item.itemId));
 
       toast({
-        title: "购买成功！",
-        description: `${item.name} 已成功购买`,
+        title: "Purchase Successful!",
+        description: `${item.name} has been purchased successfully`,
       });
 
       // 重新获取最新商品列表
@@ -51,8 +51,8 @@ export default function MarketplacePage() {
     } catch (error: any) {
       console.error("Buying error:", error);
       toast({
-        title: "购买失败",
-        description: error.message || "商品购买失败，请重试",
+        title: "Purchase Failed",
+        description: error.message || "Failed to purchase item, please try again",
         variant: "destructive",
       });
     } finally {
@@ -65,7 +65,7 @@ export default function MarketplacePage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span>正在加载市场商品...</span>
+          <span>Loading marketplace items...</span>
         </div>
       </div>
     );
@@ -75,10 +75,10 @@ export default function MarketplacePage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="p-8 text-center max-w-md">
-          <h2 className="text-2xl font-bold mb-2">加载市场失败</h2>
+          <h2 className="text-2xl font-bold mb-2">Failed to Load Marketplace</h2>
           <p className="text-muted-foreground mb-4">{itemsError.message}</p>
           <Button onClick={() => fetchAllListedItems().then(setItems)}>
-            重试
+            Retry
           </Button>
         </Card>
       </div>
@@ -88,17 +88,17 @@ export default function MarketplacePage() {
   return (
     <div className="container mx-auto px-6 py-8 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">市场</h1>
+        <h1 className="text-4xl font-bold mb-2">Marketplace</h1>
         <p className="text-muted-foreground">
-          浏览和交易Solana上的Popmart潮玩NFT
+          Browse and trade Popmart collectible toy NFTs on Solana
         </p>
       </div>
 
       {items.length === 0 ? (
         <div className="text-center py-12">
           <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">市场为空</h3>
-          <p className="text-muted-foreground">目前没有商品在市场上销售</p>
+          <h3 className="text-lg font-semibold mb-2">Marketplace is Empty</h3>
+          <p className="text-muted-foreground">There are currently no items for sale in the marketplace</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -138,12 +138,12 @@ export default function MarketplacePage() {
                 {buyingItem === item.itemId ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    购买中...
+                    Processing...
                   </>
                 ) : (
                   <>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    {connected ? "立即购买" : "连接钱包购买"}
+                    {connected ? "Buy Now" : "Connect Wallet to Buy"}
                   </>
                 )}
               </Button>

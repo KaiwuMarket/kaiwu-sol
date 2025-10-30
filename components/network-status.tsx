@@ -17,19 +17,19 @@ export function NetworkStatus() {
 
   useEffect(() => {
     setMounted(true);
-    // 检查网络连接状态
+    // Check network connection status
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // 检查Solana网络状态 - 带超时保护
+    // Check Solana network status - with timeout protection
     const checkSolanaStatus = async () => {
       if (!connection) return;
 
       try {
-        // 设置超时，避免阻塞
+        // Set a timeout to avoid blocking
         const version = await Promise.race([
           connection.getVersion(),
           new Promise<any>((_, reject) =>
@@ -52,7 +52,7 @@ export function NetworkStatus() {
     };
 
     checkSolanaStatus();
-    const interval = setInterval(checkSolanaStatus, 30000); // 每30秒检查一次
+    const interval = setInterval(checkSolanaStatus, 30000); // Check every 30 seconds
 
     return () => {
       window.removeEventListener("online", handleOnline);
@@ -61,7 +61,7 @@ export function NetworkStatus() {
     };
   }, [connection]);
 
-  // 不在未连接时隐藏，让用户知道状态
+  // Don't hide when not connected, let the user know the status
   if (!mounted) return null;
 
   return (

@@ -27,7 +27,7 @@ export default function AdminPage() {
   const [isIntaking, setIsIntaking] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // 管理员地址检查 (实际应用中应该从合约配置中获取)
+  // Admin address check (in a real app, this should be fetched from the contract config)
   const isAdmin =
     connected && publicKey?.toString() === "YOUR_ADMIN_ADDRESS_HERE";
 

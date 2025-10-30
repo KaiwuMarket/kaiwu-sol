@@ -19,7 +19,7 @@ export function WalletButton({ collapsed = false }: { collapsed?: boolean }) {
     setIsPreview(inIframe || isPreviewUrl);
   }, []);
 
-  // 防止 SSR 水合错误
+  // Prevent SSR hydration errors
   if (!mounted) {
     return collapsed ? (
       <div className="h-10 w-10 flex items-center justify-center bg-muted/50 border border-border rounded-lg">
